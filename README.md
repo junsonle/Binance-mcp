@@ -1,6 +1,6 @@
 <div align="center">   
  
-# 🔶 Binance MCP Server
+# 🔶 Binance MCP Server 
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js](https://img.shields.io/badge/Node.js-≥18.0.0-green)](https://nodejs.org/)
