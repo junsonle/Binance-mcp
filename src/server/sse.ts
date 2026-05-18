@@ -16,8 +16,6 @@ export const startSSEServer = async () => {
     app.use(cors())
     app.use(express.json())
 
-    const server = startServer()
-    
     // Store active transports
     const transports: Map<string, SSEServerTransport> = new Map()
 
@@ -35,6 +33,7 @@ export const startSSEServer = async () => {
         transports.delete(sessionId)
       })
 
+      const server = startServer()
       await server.connect(transport)
     })
 
@@ -56,12 +55,16 @@ export const startSSEServer = async () => {
       res.json({ status: "ok", mode: "sse" })
     })
 
-    app.listen(PORT, () => {
+    const httpServer = app.listen(PORT, () => {
       Logger.info(`Binance MCP Server running on SSE mode at http://localhost:${PORT}`)
       Logger.info(`SSE endpoint: http://localhost:${PORT}/mcp`)
     })
 
-    return server
+    return {
+      close: async () => {
+        httpServer.close()
+      }
+    } as any
   } catch (error) {
     Logger.error("Error starting Binance MCP SSE server:", error)
   }
