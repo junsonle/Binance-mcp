@@ -7,7 +7,7 @@ import cors from "cors"
 import Logger from "../utils/logger.js"
 import { startServer } from "./base.js"
 
-const PORT = process.env.PORT || 3002
+const PORT = process.env.PORT || 10000
 
 // Start the server in SSE mode
 export const startSSEServer = async () => {
@@ -22,7 +22,7 @@ export const startSSEServer = async () => {
     const transports: Map<string, SSEServerTransport> = new Map()
 
     // SSE endpoint
-    app.get("/sse", async (req, res) => {
+    app.get("/mcp", async (req, res) => {
       const sessionId = req.query.sessionId as string || crypto.randomUUID()
       
       Logger.info(`New SSE connection: ${sessionId}`)
@@ -58,7 +58,7 @@ export const startSSEServer = async () => {
 
     app.listen(PORT, () => {
       Logger.info(`Binance MCP Server running on SSE mode at http://localhost:${PORT}`)
-      Logger.info(`SSE endpoint: http://localhost:${PORT}/sse`)
+      Logger.info(`SSE endpoint: http://localhost:${PORT}/mcp`)
     })
 
     return server
