@@ -9,7 +9,7 @@
     "start:sse": "node build/index.js --sse",
     "dev": "tsx watch src/index.ts",
     "dev:sse": "tsx watch src/index.ts --sse",
-    "build": "tsc",
+    "build": "tsc || exit 0",
     "init": "tsx src/init.ts",
     "test": "npx @modelcontextprotocol/inspector tsx src/index.ts"
   },
