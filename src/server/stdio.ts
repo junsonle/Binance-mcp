@@ -1,5 +1,5 @@
-// src/server/stdio.ts
-import "dotenv/config"
+import dotenv from "dotenv"
+dotenv.config()
 
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 

@@ -1,5 +1,5 @@
-// src/server/sse.ts
-import "dotenv/config"
+import dotenv from "dotenv"
+dotenv.config()
 
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js"
 import express from "express"
