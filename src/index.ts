@@ -2,6 +2,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 
 import { startSSEServer } from "./server/sse.js"
+import { startHTTPServer } from "./server/http.js"
 import { startStdioServer } from "./server/stdio.js"
 import Logger from "./utils/logger.js"
 
@@ -9,6 +10,7 @@ const args = process.argv.slice(2)
 
 // Transport mode flags
 const sseMode = args.includes("--sse") || args.includes("-s")
+const httpMode = args.includes("--http") || args.includes("-h")
 // Default to stdio mode (for Claude Desktop)
 
 function printUsage() {
@@ -19,10 +21,11 @@ Usage: binance-mcp [options]
 
 Options:
   --stdio, (default)  Run in stdio mode (for Claude Desktop)
-  --sse, -s           Run in SSE mode (HTTP)
+  --sse, -s           Run in SSE mode (legacy HTTP)
+  --http, -h          Run in Streamable HTTP mode (for ChatGPT, recommended)
 
 Environment Variables:
-  PORT                Server port for SSE mode (default: 3002)
+  PORT                Server port for HTTP/SSE mode (default: 10000)
   BINANCE_API_KEY     Binance API key
   BINANCE_API_SECRET  Binance API secret
   LOG_LEVEL           Logging level (DEBUG, INFO, WARN, ERROR)
@@ -31,7 +34,10 @@ Examples:
   # Claude Desktop (stdio)
   binance-mcp
 
-  # SSE mode
+  # Streamable HTTP mode (for ChatGPT / Render deployment)
+  binance-mcp --http
+
+  # SSE mode (legacy)
   binance-mcp --sse
 `)
 }
@@ -44,7 +50,10 @@ async function main() {
 
   let server: McpServer | undefined
 
-  if (sseMode) {
+  if (httpMode) {
+    Logger.info("Starting in Streamable HTTP mode")
+    server = await startHTTPServer()
+  } else if (sseMode) {
     Logger.info("Starting in SSE mode")
     server = await startSSEServer()
   } else {

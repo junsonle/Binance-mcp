@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: binance-mcp
+    runtime: node
+    plan: free
+    buildCommand: npm run build
+    startCommand: npm run start:http
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: BINANCE_API_KEY
+        sync: false
+      - key: BINANCE_API_SECRET
+        sync: false
+      - key: LOG_LEVEL
+        value: INFO
