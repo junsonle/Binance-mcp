@@ -1,6 +1,6 @@
 
 
-import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js"
+import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js"
 import express from "express"
 import cors from "cors"
 import crypto from "crypto"
@@ -10,47 +10,65 @@ import { startServer } from "./base.js"
 
 const PORT = process.env.PORT || 10000
 
-// Start the server in Streamable HTTP mode
+// Start the server in SSE mode
 export const startSSEServer = async () => {
   try {
     const app = express()
     app.use(cors())
     app.use(express.json())
 
-    const server = startServer()
-    
-    const transport = new StreamableHTTPServerTransport({
-      sessionIdGenerator: () => crypto.randomUUID(),
-    })
+    // Store active transports
+    const transports: Map<string, SSEServerTransport> = new Map()
 
-    await server.connect(transport)
-
-    // Handle both GET (SSE) and POST (Messages) on /mcp
+    // SSE endpoint - Client connects here first
     app.get("/mcp", async (req, res) => {
-      await transport.handleRequest(req, res)
+      const sessionId = req.query.sessionId as string || crypto.randomUUID()
+      
+      Logger.info(`New SSE connection: ${sessionId}`)
+      
+      // SSEServerTransport automatically sends 'event: endpoint' with data: '/message?sessionId=...'
+      const transport = new SSEServerTransport("/message", res)
+      transports.set(sessionId, transport)
+      
+      res.on("close", () => {
+        Logger.info(`SSE connection closed: ${sessionId}`)
+        transports.delete(sessionId)
+      })
+
+      // Create a fresh McpServer instance per connection
+      const server = startServer()
+      await server.connect(transport)
     })
 
-    app.post("/mcp", async (req, res) => {
-      await transport.handleRequest(req, res, req.body)
+    // Message endpoint - Client POSTs JSON-RPC messages here
+    app.post("/message", async (req, res) => {
+      const sessionId = req.query.sessionId as string
+      const transport = transports.get(sessionId)
+      
+      if (!transport) {
+        res.status(404).json({ error: "Session not found" })
+        return
+      }
+
+      await transport.handlePostMessage(req, res)
     })
 
     // Health check
     app.get("/health", (req, res) => {
-      res.json({ status: "ok", mode: "streamable-http" })
+      res.json({ status: "ok", mode: "sse" })
     })
 
     const httpServer = app.listen(PORT, () => {
-      Logger.info(`Binance MCP Server running on streamable-http mode at http://localhost:${PORT}`)
-      Logger.info(`MCP endpoint: http://localhost:${PORT}/mcp`)
+        Logger.info(`Binance MCP Server running on SSE mode at http://localhost:${PORT}`)
+        Logger.info(`SSE endpoint: http://localhost:${PORT}/mcp`)
     })
 
     return {
       close: async () => {
-        await transport.close()
         httpServer.close()
       }
     } as any
   } catch (error) {
-    Logger.error("Error starting Binance MCP HTTP server:", error)
+    Logger.error("Error starting Binance MCP SSE server:", error)
   }
 }
